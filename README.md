@@ -81,7 +81,7 @@ shadow-neo-xl  →  8px 8px 0px #1a1a2e
 ```
 chatbot/
 ├── server.mts                    # Özel Next.js + Socket.IO sunucusu
-├── middleware.ts                 # Auth koruması
+├── proxy.ts                      # Auth koruması
 ├── tailwind.config.ts            # Neobrutalism tasarım sistemi
 │
 └── src/

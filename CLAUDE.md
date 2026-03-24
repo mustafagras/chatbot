@@ -139,7 +139,7 @@ Tümü variant + size prop'ları ile, `cn()` kullanarak:
 - SessionProvider, ToastContainer ekleme
 - Metadata Türkçe güncelleme
 
-#### [NEW] middleware.ts
+#### [NEW] proxy.ts
 - Oturum kontrolü: giriş yapılmamışsa `/giris`'e yönlendirme
 
 ---
@@ -234,7 +234,7 @@ src/
 ├── store/           (chat-store)
 └── types/           (next-auth.d.ts, index.d.ts)
 server.mts           (Custom server: Next.js + Socket.IO)
-middleware.ts
+proxy.ts
 ```
 
 ---
