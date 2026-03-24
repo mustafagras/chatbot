@@ -1,0 +1,58 @@
+{
+  "name": "nchat",
+  "version": "0.1.0",
+  "author": {
+    "name": "Mustafa Ağraş",
+    "email": "mustafaagras@trakya.edu.tr"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.mts",
+    "build": "tsc -b && next build",
+    "start": "next start",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 100",
+    "lint:strict": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write 'src/**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "5.2.2",
+    "clsx": "2.1.1",
+    "mongoose": "9.3.2",
+    "next": "16.2.1",
+    "next-auth": "4.24.13",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-hook-form": "7.72.0",
+    "react-international-phone": "4.8.0",
+    "react-toastify": "11.0.5",
+    "socket.io": "4.8.3",
+    "socket.io-client": "4.8.3",
+    "tailwind-merge": "3.5.0",
+    "tailwindcss-animate": "1.0.7",
+    "zod": "4.3.6",
+    "zustand": "5.0.12"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.4",
+    "@tailwindcss/postcss": "4.2.2",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "9.39.2",
+    "eslint-config-next": "16.2.1",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.5",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "postcss": "8.5.8",
+    "prettier": "3.8.1",
+    "prettier-plugin-tailwindcss": "0.7.2",
+    "tailwindcss": "4.2.2",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.57.2"
+  }
+}

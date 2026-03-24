@@ -1,0 +1,102 @@
+@import 'tailwindcss';
+@plugin 'tailwindcss-animate';
+@config '../../tailwind.config.ts';
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
+}
+
+@layer base {
+  :root {
+    --background: 42 60% 97%;
+    --foreground: 240 17% 14%;
+  }
+
+  .dark {
+    --background: 240 17% 8%;
+    --foreground: 42 60% 97%;
+  }
+
+  html {
+    height: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    height: 100%;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans), system-ui, sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* react-international-phone bayrak stilleri */
+.react-international-phone-input-container {
+  width: 100%;
+}
+
+.react-international-phone-input {
+  width: 100% !important;
+  height: 48px !important;
+  border: 2.5px solid #1a1a2e !important;
+  border-radius: 0px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  background: #fff !important;
+  box-shadow: 4px 4px 0px 0px #1a1a2e !important;
+  transition:
+    transform 150ms,
+    box-shadow 150ms !important;
+}
+
+.react-international-phone-input:focus {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 6px 6px 0px 0px #1a1a2e !important;
+  outline: none !important;
+}
+
+.react-international-phone-country-selector-button {
+  border: 2.5px solid #1a1a2e !important;
+  border-right: 0 !important;
+  border-radius: 0px !important;
+  height: 48px !important;
+  background: #ffe66d !important;
+  box-shadow: none !important;
+  padding: 0 12px !important;
+}
+
+.react-international-phone-country-selector-dropdown {
+  border: 2.5px solid #1a1a2e !important;
+  border-radius: 0px !important;
+  box-shadow: 4px 4px 0px 0px #1a1a2e !important;
+  z-index: 9999 !important;
+}
+
+/* react-toastify neobrutalism */
+.Toastify__toast {
+  border: 2.5px solid #1a1a2e !important;
+  border-radius: 0px !important;
+  box-shadow: 4px 4px 0px 0px #1a1a2e !important;
+  font-weight: 600 !important;
+  font-family: var(--font-sans), system-ui, sans-serif !important;
+}
+
+/* Scrollbar neobrutalism */
+.neo-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.neo-scrollbar::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.neo-scrollbar::-webkit-scrollbar-thumb {
+  background: #1a1a2e;
+  border: 1px solid #1a1a2e;
+}
