@@ -21,6 +21,7 @@ Neobrutalism tasarım diliyle geliştirilmiş, Ollama LLM entegrasyonlu, RAG des
 ## ✨ Özellikler
 
 ### 💬 Gerçek Zamanlı Mesajlaşma
+
 - **Socket.IO** ile anlık mesaj gönderme/alma
 - **Yazıyor...** göstergesi (canlı)
 - **✓ / ✓✓ Okundu bildirimleri** — mesaj iletildi ve okundu ikonları
@@ -28,17 +29,20 @@ Neobrutalism tasarım diliyle geliştirilmiş, Ollama LLM entegrasyonlu, RAG des
 - **🔔 Toast bildirimleri** — modal kapalıyken yeni mesaj uyarısı
 
 ### 🤖 Yapay Zeka Asistan (Ollama + RAG)
+
 - **llama3.2** modeli ile yerel LLM entegrasyonu (localhost:11434)
 - **SSE Streaming** — bot yanıtları token token akar
 - **RAG (Retrieval-Augmented Generation)** — `nomic-embed-text` ile vektör gömme, kosinüs benzerliği tabanlı context arama
 - **Otomatik fallback** — Ollama çevrimdışıysa rastgele Türkçe yanıt
 
 ### 🔐 Kimlik Doğrulama
-- **📱 Telefon numarasıyla giriş** — ülke bayraklı uluslararası format, otomatik hesap oluşturma
-- **✉️ Email / Şifre ile kayıt & giriş** — `bcryptjs` ile güvenli hash (Windows uyumlu)
-- **Tab geçişli giriş sayfası** — telefon ve email modları tek sayfada
+
+- **📱 Telefon + OTP ile giriş** — ülke bayraklı uluslararası format, 6 haneli doğrulama kodu
+- **🔑 OTP güvenliği** — `bcryptjs` ile hash'lenmiş kod, 5 dk süre sınırı, maks 5 deneme hakkı
+- **İki adımlı giriş sayfası** — numara gir → OTP doğrula → otomatik hesap oluşturma
 
 ### 💛 Neobrutalism Tasarım
+
 - Sert gölgeler, kalın kenarlıklar ve canlı renklerden oluşan özgün tasarım dili
 - **WhatsApp stili split-panel** — sol sohbet listesi + sağ mesaj alanı
 - Özel animasyonlar: `neo-pop`, `neo-slide-up`, `neo-shake`
@@ -47,24 +51,24 @@ Neobrutalism tasarım diliyle geliştirilmiş, Ollama LLM entegrasyonlu, RAG des
 
 ## 🛠 Teknoloji Yığını
 
-| Katman | Teknoloji |
-| --- | --- |
-| **Framework** | Next.js 16 (App Router) |
-| **UI Kütüphanesi** | React 19 + React Compiler |
-| **Dil** | TypeScript 5.9 |
-| **Gerçek Zamanlı** | Socket.IO 4.8 |
-| **Veritabanı** | MongoDB + Mongoose 9 |
-| **Kimlik Doğrulama** | NextAuth.js 4 (JWT + 2× CredentialsProvider) |
-| **Şifre Hash** | bcryptjs 3 (Windows uyumlu) |
-| **LLM** | Ollama — llama3.2 (yerel) |
-| **Embedding** | Ollama — nomic-embed-text (768 dim) |
-| **RAG** | Saf kosinüs benzerliği (Atlas vektör DB yok) |
-| **State Yönetimi** | Zustand 5 |
-| **Form Yönetimi** | React Hook Form 7 + Zod 4 |
-| **Stil** | Tailwind CSS 4 |
-| **Özel Sunucu** | Node.js HTTP + `tsx` (ESM) |
-| **Bildirimler** | React Toastify 11 |
-| **Telefon Girdisi** | react-international-phone 4 |
+| Katman               | Teknoloji                                       |
+| -------------------- | ----------------------------------------------- |
+| **Framework**        | Next.js 16 (App Router)                         |
+| **UI Kütüphanesi**   | React 19 + React Compiler                       |
+| **Dil**              | TypeScript 5.9                                  |
+| **Gerçek Zamanlı**   | Socket.IO 4.8                                   |
+| **Veritabanı**       | MongoDB + Mongoose 9                            |
+| **Kimlik Doğrulama** | NextAuth.js 4 (JWT + CredentialsProvider)       |
+| **OTP Doğrulama**    | bcryptjs 3 (hash + süre sınırı + deneme limiti) |
+| **LLM**              | Ollama — llama3.2 (yerel)                       |
+| **Embedding**        | Ollama — nomic-embed-text (768 dim)             |
+| **RAG**              | Saf kosinüs benzerliği (Atlas vektör DB yok)    |
+| **State Yönetimi**   | Zustand 5                                       |
+| **Form Yönetimi**    | React Hook Form 7 + Zod 4                       |
+| **Stil**             | Tailwind CSS 4                                  |
+| **Özel Sunucu**      | Node.js HTTP + `tsx` (ESM)                      |
+| **Bildirimler**      | React Toastify 11                               |
+| **Telefon Girdisi**  | react-international-phone 4                     |
 
 ---
 
@@ -79,13 +83,14 @@ chatbot/
 │
 └── src/
     ├── app/
-    │   ├── giris/page.tsx            # Telefon + Email tab giriş sayfası
-    │   ├── kayit/page.tsx            # Email/şifre kayıt sayfası
+    │   ├── giris/page.tsx            # Telefon + OTP iki adımlı giriş sayfası
     │   ├── layout.tsx                # Root layout (providers)
     │   └── api/
     │       ├── auth/
     │       │   ├── [...nextauth]/    # NextAuth handler
-    │       │   └── kayit/            # POST — yeni kullanıcı kaydı
+    │       │   └── otp/
+    │       │       ├── gonder/       # POST — OTP oluştur ve gönder
+    │       │       └── dogrula/      # POST — OTP doğrula
     │       ├── chat/                 # POST — SSE streaming Ollama endpoint
     │       ├── sohbetler/            # Sohbet CRUD API
     │       └── kullanicilar/         # Kullanıcı arama API
@@ -106,17 +111,19 @@ chatbot/
     │   └── use-read-receipts.ts      # messages-read dinleyicisi (✓✓)
     │
     ├── lib/
-    │   ├── auth.ts                   # NextAuth (telefon + email provider)
+    │   ├── auth.ts                   # NextAuth (telefon + OTP provider)
     │   ├── mongodb.ts                # Mongoose bağlantı singleton'u
     │   ├── socket.ts                 # İstemci taraflı socket
     │   ├── ollama.ts                 # Streaming wrapper, embedText, isOllamaAvailable
+    │   ├── otp.ts                    # OTP oluşturma, bcrypt hash, doğrulama
     │   └── rag.ts                    # cosineSimilarity, findRelevantContext, saveEmbedding
     │
     ├── server/
     │   ├── models/
-    │   │   ├── user.ts               # email, passwordHash, comparePassword()
+    │   │   ├── user.ts               # phone, displayName, avatarColor, isBot
     │   │   ├── conversation.ts       # participants, lastMessage, unreadCounts
     │   │   ├── message.ts            # content, senderId, readBy[]
+    │   │   ├── otp.ts                # phone, otpHash, attempts, expiresAt (TTL)
     │   │   └── embedding.ts          # vector[768], conversationId, messageId
     │   └── seed.ts                   # Varsayılan bot kullanıcı oluşturma
     │
@@ -184,15 +191,15 @@ Uygulama `http://localhost:3000` adresinde çalışır.
 
 ## 📜 Komutlar
 
-| Komut | Açıklama |
-| --- | --- |
-| `yarn dev` | Geliştirme sunucusunu başlatır (Socket.IO destekli özel sunucu) |
-| `yarn build` | TypeScript kontrolü + production build alır |
-| `yarn start` | Production sunucusunu başlatır |
-| `yarn lint` | ESLint ile kod kalitesi kontrolü |
-| `yarn lint:strict` | Sıfır uyarı toleransıyla ESLint |
-| `yarn lint:fix` | ESLint hatalarını otomatik düzeltir |
-| `yarn format` | Prettier ile kod biçimlendirme |
+| Komut              | Açıklama                                                        |
+| ------------------ | --------------------------------------------------------------- |
+| `yarn dev`         | Geliştirme sunucusunu başlatır (Socket.IO destekli özel sunucu) |
+| `yarn build`       | TypeScript kontrolü + production build alır                     |
+| `yarn start`       | Production sunucusunu başlatır                                  |
+| `yarn lint`        | ESLint ile kod kalitesi kontrolü                                |
+| `yarn lint:strict` | Sıfır uyarı toleransıyla ESLint                                 |
+| `yarn lint:fix`    | ESLint hatalarını otomatik düzeltir                             |
+| `yarn format`      | Prettier ile kod biçimlendirme                                  |
 
 ---
 
@@ -213,18 +220,18 @@ tsx server.mts
 
 ### Socket.IO Olayları
 
-| Olay | Yön | Açıklama |
-| --- | --- | --- |
-| `authenticate` | İstemci → Sunucu | Kullanıcıyı kişisel odaya alır, isOnline günceller |
-| `join-conversation` | İstemci → Sunucu | Sohbet odasına katılır |
-| `send-message` | İstemci → Sunucu | Mesajı DB'ye kaydeder, herkese yayar, embedding tetikler |
-| `typing` | İstemci → Sunucu | Yazıyor... göstergesini yayar |
-| `stop-typing` | İstemci → Sunucu | Yazıyor göstergesini kaldırır |
-| `mark-read` | İstemci → Sunucu | Okunmamış sayacı sıfırlar |
-| `new-message` | Sunucu → İstemci | Yeni mesaj bildirimi |
-| `conversation-updated` | Sunucu → İstemci | Sohbet listesi güncellemesi |
-| `user-status` | Sunucu → İstemci | Online/offline durum değişikliği |
-| `messages-read` | Sunucu → İstemci | Mesajlar okundu bildirimi (✓✓) |
+| Olay                   | Yön              | Açıklama                                                 |
+| ---------------------- | ---------------- | -------------------------------------------------------- |
+| `authenticate`         | İstemci → Sunucu | Kullanıcıyı kişisel odaya alır, isOnline günceller       |
+| `join-conversation`    | İstemci → Sunucu | Sohbet odasına katılır                                   |
+| `send-message`         | İstemci → Sunucu | Mesajı DB'ye kaydeder, herkese yayar, embedding tetikler |
+| `typing`               | İstemci → Sunucu | Yazıyor... göstergesini yayar                            |
+| `stop-typing`          | İstemci → Sunucu | Yazıyor göstergesini kaldırır                            |
+| `mark-read`            | İstemci → Sunucu | Okunmamış sayacı sıfırlar                                |
+| `new-message`          | Sunucu → İstemci | Yeni mesaj bildirimi                                     |
+| `conversation-updated` | Sunucu → İstemci | Sohbet listesi güncellemesi                              |
+| `user-status`          | Sunucu → İstemci | Online/offline durum değişikliği                         |
+| `messages-read`        | Sunucu → İstemci | Mesajlar okundu bildirimi (✓✓)                           |
 
 ### AI Bot Akışı
 
@@ -248,7 +255,7 @@ Bot yanıtı Socket.IO ile sohbete yayınlanır
 
 ```typescript
 // Kosinüs benzerliği ile ilgili mesajları bul
-findRelevantContext(conversationId, queryText, topK=5, threshold=0.5)
+findRelevantContext(conversationId, queryText, (topK = 5), (threshold = 0.5))
 
 // Mesajı vektörleştir ve kaydet (arka plan, hata toleranslı)
 saveEmbedding(conversationId, messageId, content)
@@ -262,13 +269,18 @@ saveEmbedding(conversationId, messageId, content)
 // Kullanıcı
 User {
   phone: string          // benzersiz, zorunlu
-  email?: string         // opsiyonel, benzersiz
-  passwordHash?: string  // bcryptjs hash
   displayName: string
   avatarColor: string
   isBot: boolean
   isOnline: boolean
-  comparePassword(password): Promise<boolean>
+}
+
+// OTP (Tek Kullanımlık Kod)
+Otp {
+  phone: string          // indeksli
+  otpHash: string        // bcryptjs hash
+  attempts: number       // maks 5 deneme
+  expiresAt: Date        // 5 dk TTL (MongoDB expires index)
 }
 
 // Sohbet
@@ -303,19 +315,20 @@ Embedding {
 ## 🔒 Kimlik Doğrulama Akışı
 
 ```
-Telefon ile Giriş:
-  Numara gir → DB'de var mı?
+Adım 1 — OTP Gönder:
+  POST /api/auth/otp/gonder { phone }
+  → 6 haneli rastgele kod üret
+  → bcrypt.hash(10 round) → MongoDB'ye kaydet (5 dk TTL)
+  → Dev modda kodu response'a ekle, prod'da SMS servisi
+
+Adım 2 — OTP Doğrula & Giriş:
+  signIn('credentials', { phone, otp })
+  → POST /api/auth/otp/dogrula → bcrypt.compare()
+    Geçersiz / Süresi dolmuş / 5 deneme aşıldı → 400
+    Doğru → Eski OTP kayıtlarını sil
+  → DB'de kullanıcı var mı?
     Evet → JWT oturumu aç
-    Hayır → Otomatik hesap oluştur (demo mod) → JWT
-
-Email ile Giriş:
-  Email + Şifre → DB'de kayıtlı mı? → bcrypt.compare()
-    Doğru → JWT oturumu aç
-    Hatalı → 401
-
-Email ile Kayıt:
-  POST /api/auth/kayit → bcrypt.hash(12 round) → User oluştur
-  → Otomatik signIn('credentials-email') → Ana sayfaya yönlendir
+    Hayır → Otomatik hesap oluştur → JWT
 
 Ortak:
   JWT { userId, phone, avatarColor }
@@ -331,16 +344,16 @@ Tüm renkler, gölgeler ve animasyonlar `tailwind.config.ts` içinde tanımlanm�
 
 ### Renk Paleti
 
-| Token | Renk | Kullanım |
-| --- | --- | --- |
+| Token        | Renk      | Kullanım                                       |
+| ------------ | --------- | ---------------------------------------------- |
 | `neo-yellow` | `#FFE66D` | Birincil vurgu, gönderilen mesajlar, aktif tab |
-| `neo-pink` | `#FF6B9D` | İkincil vurgu, yeni sohbet |
-| `neo-blue` | `#4ECDC4` | Bilgi, okundu ✓✓ rengi |
-| `neo-mint` | `#A8E6CF` | Başarı, bot sohbet |
-| `neo-orange` | `#FF8A5C` | Uyarı |
-| `neo-purple` | `#C3A6FF` | Kayıt sayfası, bot ismi |
-| `neo-bg` | `#FEF9EF` | Sayfa arka planı |
-| `neo-black` | `#1a1a2e` | Metin ve kenarlık |
+| `neo-pink`   | `#FF6B9D` | İkincil vurgu, yeni sohbet                     |
+| `neo-blue`   | `#4ECDC4` | Bilgi, okundu ✓✓ rengi                         |
+| `neo-mint`   | `#A8E6CF` | Başarı, bot sohbet                             |
+| `neo-orange` | `#FF8A5C` | Uyarı                                          |
+| `neo-purple` | `#C3A6FF` | Kayıt sayfası, bot ismi                        |
+| `neo-bg`     | `#FEF9EF` | Sayfa arka planı                               |
+| `neo-black`  | `#1a1a2e` | Metin ve kenarlık                              |
 
 ### Gölge Sistemi
 
