@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useChatStore } from '@/store/chat-store'
 import { useSocket } from '@/hooks/use-socket'
@@ -23,10 +23,13 @@ export default function ChatModal() {
   } = useChatStore()
   const { joinConversation } = useSocket()
 
-  const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const fetchConversations = useCallback(async () => {
+  const selectedConversation = activeConversationId
+    ? (conversations.find((c) => c._id === activeConversationId) ?? null)
+    : null
+
+  async function fetchConversations() {
     try {
       const res = await fetch('/api/sohbetler')
       const data = (await res.json()) as ChatConversation[]
@@ -38,25 +41,14 @@ export default function ChatModal() {
     } catch (err) {
       console.error('Sohbet yükleme hatası:', err)
     }
-  }, [setConversations, calculateUnreadTotal, session?.user?.id, joinConversation])
+  }
 
   useEffect(() => {
     void fetchConversations()
-  }, [fetchConversations])
-
-  // activeConversationId değiştiğinde selectedConversation'ı güncelle
-  useEffect(() => {
-    if (activeConversationId) {
-      const conv = conversations.find((c) => c._id === activeConversationId)
-      if (conv) setSelectedConversation(conv)
-    } else {
-      setSelectedConversation(null)
-    }
-  }, [activeConversationId, conversations])
+  }, [session?.user?.id])
 
   const handleSelectConversation = (conv: ChatConversation) => {
     setActiveConversation(conv._id)
-    setSelectedConversation(conv)
     if (session?.user?.id) {
       markConversationRead(conv._id, session.user.id)
       calculateUnreadTotal(session.user.id)
@@ -65,7 +57,6 @@ export default function ChatModal() {
 
   const handleBack = () => {
     setActiveConversation(null)
-    setSelectedConversation(null)
   }
 
   const handleStartBotChat = async () => {
@@ -106,7 +97,6 @@ export default function ChatModal() {
   const handleClose = () => {
     setModalOpen(false)
     setActiveConversation(null)
-    setSelectedConversation(null)
   }
 
   return (

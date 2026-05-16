@@ -37,7 +37,7 @@ export default function ConversationList({
   onStartBotChat,
 }: ConversationListProps) {
   const { data: session } = useSession()
-  const { conversations, activeConversationId, typingUsers } = useChatStore()
+  const { conversations, activeConversationId, typingUsers, onlineUsers } = useChatStore()
 
   const [isNewChatOpen, setIsNewChatOpen] = useState(false)
   const [newChatPhone, setNewChatPhone] = useState('')
@@ -188,7 +188,7 @@ export default function ConversationList({
                   name={other.displayName}
                   color={other.avatarColor}
                   size='md'
-                  isOnline={other.isOnline}
+                  isOnline={onlineUsers.has(other._id) || other.isOnline}
                 />
                 <div className='flex flex-1 flex-col items-start overflow-hidden'>
                   <div className='flex w-full items-center justify-between'>

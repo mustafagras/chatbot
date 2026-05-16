@@ -2,6 +2,7 @@ import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import connectDB from '@/lib/mongodb'
 import User from '@/server/models/user'
+import { verifyOtp } from '@/lib/otp'
 
 const AVATAR_COLORS = ['#FFE66D', '#FF6B9D', '#4ECDC4', '#A8E6CF', '#FF8A5C', '#C3A6FF']
 
@@ -15,19 +16,24 @@ export const authOptions: NextAuthOptions = {
       name: 'Telefon',
       credentials: {
         phone: { label: 'Telefon Numarası', type: 'tel' },
+        otp: { label: 'Doğrulama Kodu', type: 'text' },
       },
       async authorize(credentials) {
-        if (!credentials?.phone) return null
+        if (!credentials?.phone || !credentials?.otp) return null
 
         const phone = credentials.phone.replace(/\s+/g, '')
         if (phone.length < 10) return null
+
+        // OTP doğrulama (bcrypt ile)
+        const otpResult = await verifyOtp(phone, credentials.otp)
+        if (!otpResult.valid) return null
 
         await connectDB()
 
         let user = await User.findOne({ phone })
 
         if (!user) {
-          // Demo mod: otomatik kayıt
+          // Otomatik kayıt
           const displayName = `Kullanıcı ${phone.slice(-4)}`
           user = await User.create({
             phone,

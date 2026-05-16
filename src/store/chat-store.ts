@@ -9,6 +9,7 @@ interface ChatState {
   isModalOpen: boolean
   unreadTotal: number
   typingUsers: Record<string, { userId: string; displayName: string }>
+  onlineUsers: Set<string>
 
   // Eylemler
   setConversations: (conversations: ChatConversation[]) => void
@@ -21,6 +22,8 @@ interface ChatState {
   clearTyping: (conversationId: string, userId: string) => void
   markConversationRead: (conversationId: string, userId: string) => void
   calculateUnreadTotal: (userId: string) => void
+  setUserOnline: (userId: string, isOnline: boolean) => void
+  markMessagesRead: (conversationId: string, userId: string) => void
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -30,6 +33,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isModalOpen: false,
   unreadTotal: 0,
   typingUsers: {},
+  onlineUsers: new Set<string>(),
 
   setConversations: (conversations) => {
     set({ conversations })
@@ -55,6 +59,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   setActiveConversation: (id) => {
+    const current = get().activeConversationId
+    if (id === current) return
     set({ activeConversationId: id, messages: [] })
   },
 
@@ -109,5 +115,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
       return sum + (c.unreadCounts[userId] || 0)
     }, 0)
     set({ unreadTotal: total })
+  },
+
+  setUserOnline: (userId, isOnline) => {
+    set((state) => {
+      const updated = new Set(state.onlineUsers)
+      if (isOnline) {
+        updated.add(userId)
+      } else {
+        updated.delete(userId)
+      }
+      return { onlineUsers: updated }
+    })
+  },
+
+  markMessagesRead: (conversationId, userId) => {
+    set((state) => {
+      const updatedMessages = state.messages.map((m) => {
+        if (m.conversationId === conversationId && !m.readBy.includes(userId)) {
+          return { ...m, readBy: [...m.readBy, userId] }
+        }
+        return m
+      })
+      return { messages: updatedMessages }
+    })
   },
 }))

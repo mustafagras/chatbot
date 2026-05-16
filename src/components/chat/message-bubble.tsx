@@ -7,6 +7,9 @@ interface MessageBubbleProps {
   createdAt: string
   isMine: boolean
   senderName?: string
+  readBy?: string[]
+  currentUserId?: string
+  otherParticipantId?: string
 }
 
 export default function MessageBubble({
@@ -14,11 +17,18 @@ export default function MessageBubble({
   createdAt,
   isMine,
   senderName,
+  readBy = [],
+  currentUserId,
+  otherParticipantId,
 }: MessageBubbleProps) {
   const time = new Date(createdAt).toLocaleTimeString('tr-TR', {
     hour: '2-digit',
     minute: '2-digit',
   })
+
+  // Okundu göstergesi: sadece kendi mesajlarımda göster
+  const isReadByOther = isMine && otherParticipantId ? readBy.includes(otherParticipantId) : false
+  const isSent = isMine && currentUserId ? readBy.includes(currentUserId) : false
 
   return (
     <div className={cn('animate-neo-slide-up mb-3 flex', isMine ? 'justify-end' : 'justify-start')}>
@@ -34,14 +44,24 @@ export default function MessageBubble({
           <p className='text-neo-purple mb-1 text-[11px] font-extrabold'>{senderName}</p>
         )}
         <p className='text-[14px] leading-relaxed wrap-break-word'>{content}</p>
-        <p
-          className={cn(
-            'mt-1 text-[10px]',
-            isMine ? 'text-neo-gray-600 text-right' : 'text-neo-gray-400',
-          )}
+        <div
+          className={cn('mt-1 flex items-center gap-1', isMine ? 'justify-end' : 'justify-start')}
         >
-          {time}
-        </p>
+          <p className={cn('text-[10px]', isMine ? 'text-neo-gray-600' : 'text-neo-gray-400')}>
+            {time}
+          </p>
+          {isMine && (
+            <span
+              className={cn(
+                'text-[11px] font-bold transition-colors',
+                isReadByOther ? 'text-neo-blue' : 'text-neo-gray-400',
+              )}
+              title={isReadByOther ? 'Okundu' : isSent ? 'İletildi' : 'Gönderildi'}
+            >
+              {isReadByOther ? '✓✓' : '✓'}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )

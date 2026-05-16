@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useChatStore } from '@/store/chat-store'
 import { useSocket } from '@/hooks/use-socket'
@@ -21,30 +21,41 @@ export default function MessageArea({ conversation, onBack }: MessageAreaProps) 
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastFetchedConvRef = useRef<string | null>(null)
+  const [loadingConvId, setLoadingConvId] = useState<string | null>(null)
 
   const userId = session?.user?.id
   const other = conversation.participants.find((p) => p._id !== userId)
   const isTyping = typingUsers[conversation._id]
+
+  const isLoadingMessages = loadingConvId === conversation._id
+
+  const fetchMessages = useCallback(
+    async (convId: string) => {
+      try {
+        const res = await fetch(`/api/sohbetler/${convId}/mesajlar`)
+        const data = (await res.json()) as ChatMessage[]
+        setMessages(data)
+      } catch (err) {
+        console.error('Mesaj yükleme hatası:', err)
+      } finally {
+        setLoadingConvId(null)
+      }
+    },
+    [setMessages],
+  )
 
   // Sohbet odasına katıl ve mesajları yükle
   useEffect(() => {
     joinConversation(conversation._id)
     if (userId) markRead(conversation._id)
 
-    const fetchMessages = async () => {
-      try {
-        const res = await fetch(`/api/sohbetler/${conversation._id}/mesajlar`)
-        const data = (await res.json()) as ChatMessage[]
-        setMessages(data)
-      } catch (err) {
-        console.error('Mesaj yükleme hatası:', err)
-      }
-    }
-
-    void fetchMessages()
-
-    // Ayrılmıyoruz, böylece arka planda bildirim almaya devam edebiliriz
-  }, [conversation._id])
+    // Aynı sohbet için tekrar fetch yapma
+    if (lastFetchedConvRef.current === conversation._id) return
+    lastFetchedConvRef.current = conversation._id
+    setLoadingConvId(conversation._id)
+    void fetchMessages(conversation._id)
+  }, [conversation._id, userId, joinConversation, markRead, fetchMessages])
 
   // Otomatik scroll
   useEffect(() => {
@@ -113,7 +124,12 @@ export default function MessageArea({ conversation, onBack }: MessageAreaProps) 
 
       {/* Mesajlar */}
       <div className='bg-neo-bg neo-scrollbar flex-1 overflow-y-auto p-4'>
-        {messages.length === 0 ? (
+        {isLoadingMessages ? (
+          <div className='flex h-full flex-col items-center justify-center text-center'>
+            <div className='mb-3 animate-bounce text-4xl'>💬</div>
+            <p className='text-neo-sm text-neo-gray-500'>Mesajlar yükleniyor...</p>
+          </div>
+        ) : messages.length === 0 ? (
           <div className='flex h-full flex-col items-center justify-center text-center'>
             <div className='mb-3 text-5xl'>👋</div>
             <p className='text-neo-sm text-neo-gray-500'>Henüz mesaj yok</p>

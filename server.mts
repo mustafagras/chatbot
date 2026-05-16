@@ -10,7 +10,7 @@ const port = parseInt(process.env.PORT || '3000', 10)
 const app = next({ dev, hostname, port })
 const handler = app.getRequestHandler()
 
-// --- Bot mesajları (Türkçe) ---
+// --- Bot mesajları (Türkçe) - Ollama yoksa fallback ---
 const BOT_REPLIES = [
   'Merhaba! Size nasıl yardımcı olabilirim? 😊',
   'Anladım, hemen ilgileniyorum! 🚀',
@@ -26,6 +26,13 @@ const BOT_REPLIES = [
 
 function randomBotReply(): string {
   return BOT_REPLIES[Math.floor(Math.random() * BOT_REPLIES.length)]
+}
+
+// --- Ollama + RAG için dinamik import ---
+async function loadAI() {
+  const { chatCompletion, isOllamaAvailable } = await import('./src/lib/ollama.js')
+  const { findRelevantContext, saveEmbedding } = await import('./src/lib/rag.js')
+  return { chatCompletion, isOllamaAvailable, findRelevantContext, saveEmbedding }
 }
 
 // --- Dinamik model import ---
@@ -137,6 +144,14 @@ app.prepare().then(async () => {
           // Odaya yayınla
           io.to(`conv:${data.conversationId}`).emit('new-message', populatedMessage)
 
+          // Arka planda embedding kaydet (RAG)
+          void (async () => {
+            try {
+              const ai = await loadAI()
+              await ai.saveEmbedding(data.conversationId, message._id.toString(), data.content)
+            } catch {}
+          })()
+
           // Sohbet listesi güncelleme
           if (conversation) {
             const updatedConv = await Conversation.findById(data.conversationId)
@@ -195,7 +210,34 @@ app.prepare().then(async () => {
               }, 500)
 
               setTimeout(async () => {
-                const botReply = randomBotReply()
+                let botReply: string
+
+                // Ollama entegrasyonu
+                try {
+                  const ai = await loadAI()
+                  const ollamaOk = await ai.isOllamaAvailable()
+
+                  if (ollamaOk) {
+                    // RAG context bul
+                    const context = await ai.findRelevantContext(data.conversationId, data.content)
+
+                    const systemPrompt = context
+                      ? `Sen yardımsever bir Türkçe asistansın. Kısa ve net cevaplar ver.\n\n${context}`
+                      : 'Sen yardımsever bir Türkçe asistansın. Kısa ve net cevaplar ver.'
+
+                    botReply = await ai.chatCompletion([
+                      { role: 'system', content: systemPrompt },
+                      { role: 'user', content: data.content },
+                    ])
+
+                    if (!botReply?.trim()) botReply = randomBotReply()
+                  } else {
+                    botReply = randomBotReply()
+                  }
+                } catch (aiErr) {
+                  console.error('Ollama hatası, fallback kullanılıyor:', aiErr)
+                  botReply = randomBotReply()
+                }
                 const botMessage = await Message.create({
                   conversationId: new mongoose.Types.ObjectId(data.conversationId),
                   senderId: botParticipant._id,
